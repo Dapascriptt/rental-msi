@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware;                  // alamat class
 
-use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance as Middleware;
+use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance as Middleware; // bawaan Laravel
 
+// Saat aplikasi dalam "mode maintenance" (php artisan down), middleware ini
+// menampilkan halaman "sedang dalam perbaikan" untuk setiap request.
 class PreventRequestsDuringMaintenance extends Middleware
 {
     /**
@@ -11,7 +13,7 @@ class PreventRequestsDuringMaintenance extends Middleware
      *
      * @var array<int, string>
      */
-    protected $except = [
+    protected $except = [                       // daftar URL yang TETAP bisa diakses meski sedang maintenance
         //
     ];
 }

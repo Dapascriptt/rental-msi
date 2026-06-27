@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware;                  // alamat class
 
-use Illuminate\Foundation\Http\Middleware\TrimStrings as Middleware;
+use Illuminate\Foundation\Http\Middleware\TrimStrings as Middleware; // bawaan Laravel
 
+// Middleware ini otomatis menghapus spasi berlebih di awal/akhir setiap
+// input form (mirip fungsi trim()). Berguna agar data lebih rapi.
 class TrimStrings extends Middleware
 {
     /**
@@ -11,7 +13,7 @@ class TrimStrings extends Middleware
      *
      * @var array<int, string>
      */
-    protected $except = [
+    protected $except = [                       // input yang TIDAK boleh di-trim (spasi mungkin disengaja)
         'current_password',
         'password',
         'password_confirmation',

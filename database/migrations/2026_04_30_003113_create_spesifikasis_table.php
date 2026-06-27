@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up(): void                    // membuat tabel "spesifikasis"
     {
         Schema::create('spesifikasis', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
-            $table->string('key');
-            $table->string('value');
+            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete(); // FK ke barangs
+            $table->string('key');                 // nama spesifikasi (contoh: "Tenaga")
+            $table->string('value');               // nilai spesifikasi (contoh: "150 HP")
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('spesifikasis');

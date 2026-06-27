@@ -2,17 +2,20 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Tipe;
-use App\Models\Barang;
-use App\Models\HargaBarang;
-use App\Models\Unit;
-use App\Models\Spesifikasi;
+use Illuminate\Database\Seeder;                   // class dasar seeder
+use App\Models\Tipe;                              // model Tipe (brand)
+use App\Models\Barang;                            // model Barang (model alat)
+use App\Models\HargaBarang;                       // model HargaBarang
+use App\Models\Unit;                              // model Unit
+use App\Models\Spesifikasi;                       // model Spesifikasi
 
+// Seeder utama data alat berat. Sekali jalan langsung mengisi: tipe (brand),
+// barang (model), spesifikasi, harga, dan unit fisiknya.
 class AlatBeratSeeder extends Seeder
 {
     /**
-     * Ambil image berdasarkan model alat berat.
+     * Ambil nama file gambar berdasarkan model alat berat.
+     * match() = seperti switch: cocokkan $model, kembalikan nama file gambarnya.
      */
     private function getImageByModel($model)
     {
@@ -35,6 +38,7 @@ class AlatBeratSeeder extends Seeder
      */
     public function run()
     {
+        // Daftar data alat berat (tiap baris = 1 unit beserta spesifikasinya).
         $dataAlatBerat = [
             [
                 'brand' => 'Doosan',
@@ -246,55 +250,56 @@ class AlatBeratSeeder extends Seeder
             ],
         ];
 
-        foreach ($dataAlatBerat as $index => $item) {
-            // 1. Insert atau get Tipe / Brand
+        foreach ($dataAlatBerat as $index => $item) {  // proses tiap data alat berat
+            // 1. Buat Tipe (brand). firstOrCreate = ambil jika sudah ada, buat jika belum (cegah duplikat).
             $tipe = Tipe::firstOrCreate([
                 'nama_tipe' => $item['brand'],
             ]);
 
-            // 2. Insert atau update Barang / Model
+            // 2. Buat/perbarui Barang (model). updateOrCreate: cari pakai 2 kolom pertama,
+            //    kalau ada perbarui datanya, kalau tidak ada buat baru.
             $barang = Barang::updateOrCreate(
                 [
-                    'tipe_id' => $tipe->id,
-                    'nama_barang' => $item['model'],
+                    'tipe_id' => $tipe->id,            // kunci pencarian: tipe
+                    'nama_barang' => $item['model'],  // kunci pencarian: nama model
                 ],
                 [
                     'deskripsi' => 'Unit Alat Berat ' . $item['brand'] . ' ' . $item['model'],
-                    'image' => $this->getImageByModel($item['model']),
+                    'image' => $this->getImageByModel($item['model']), // ambil gambar via fungsi di atas
                 ]
             );
 
-            // 3. Insert atau update spesifikasi barang
+            // 3. Simpan tiap spesifikasi barang (key => value)
             foreach ($item['spesifikasi'] as $key => $value) {
                 Spesifikasi::updateOrCreate(
                     [
                         'barang_id' => $barang->id,
-                        'key' => $key,
+                        'key' => $key,                // cari berdasarkan barang + nama spesifikasi
                     ],
                     [
-                        'value' => $value,
+                        'value' => $value,            // perbarui/isi nilainya
                     ]
                 );
             }
 
-            // 4. Insert atau update harga barang, ambil harga tertinggi
+            // 4. Simpan harga. Jika belum ada -> buat; jika sudah ada -> perbarui hanya kalau harga baru lebih tinggi.
             $hargaExisting = HargaBarang::where('barang_id', $barang->id)->first();
 
-            if (!$hargaExisting) {
+            if (!$hargaExisting) {                    // belum punya harga
                 HargaBarang::create([
                     'barang_id' => $barang->id,
                     'harga' => $item['harga'],
                     'satuan' => 'Jam',
                 ]);
-            } else {
-                if ($item['harga'] > $hargaExisting->harga) {
+            } else {                                  // sudah punya harga
+                if ($item['harga'] > $hargaExisting->harga) { // hanya update kalau lebih mahal
                     $hargaExisting->update([
                         'harga' => $item['harga'],
                     ]);
                 }
             }
 
-            // 5. Insert unit
+            // 5. Buat unit fisiknya, kode urut UNIT-001, UNIT-002, dst
             $kodeUnit = 'UNIT-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT);
 
             Unit::create([

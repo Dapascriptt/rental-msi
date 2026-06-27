@@ -6,31 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up(): void                    // membuat tabel "pemesanans"
     {
         Schema::create('pemesanans', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_pemesan');
-            $table->string('no_hp')->nullable();
-            $table->string('perusahaan')->nullable();
-            $table->text('alamat')->nullable();
+            $table->string('nama_pemesan');        // nama pemesan
+            $table->string('no_hp')->nullable();   // nomor HP (boleh kosong)
+            $table->string('perusahaan')->nullable(); // nama perusahaan (boleh kosong)
+            $table->text('alamat')->nullable();    // alamat (boleh kosong)
 
-            $table->date('tanggal_mulai');
-            $table->date('tanggal_selesai');
+            $table->date('tanggal_mulai');         // tanggal mulai sewa
+            $table->date('tanggal_selesai');       // tanggal selesai sewa
 
-            $table->enum('status', ['pending', 'confirmed', 'ongoing', 'done', 'cancelled'])
-                ->default('pending');
+            $table->enum('status', ['pending', 'confirmed', 'ongoing', 'done', 'cancelled']) // status pesanan
+                ->default('pending');              // default 'pending' saat pertama dibuat
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('pemesanans');

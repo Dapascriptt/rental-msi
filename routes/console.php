@@ -1,19 +1,19 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Foundation\Inspiring;              // helper kutipan inspiratif
+use Illuminate\Support\Facades\Artisan;           // untuk mendaftarkan perintah artisan
 
 /*
 |--------------------------------------------------------------------------
 | Console Routes
 |--------------------------------------------------------------------------
 |
-| This file is where you may define all of your Closure based console
-| commands. Each Closure is bound to a command instance allowing a
-| simple approach to interacting with each command's IO methods.
+| File ini untuk membuat perintah artisan sederhana (custom command).
+| Perintah didaftarkan di sini lalu bisa dijalankan via "php artisan ...".
 |
 */
 
+// Contoh bawaan: jalankan "php artisan inspire" untuk menampilkan kutipan.
 Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+    $this->comment(Inspiring::quote());           // tampilkan kutipan inspiratif di terminal
+})->purpose('Display an inspiring quote');        // ->purpose = deskripsi yang muncul di "php artisan list"

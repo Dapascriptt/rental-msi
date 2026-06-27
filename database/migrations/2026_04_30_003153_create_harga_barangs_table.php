@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up(): void                    // membuat tabel "harga_barangs"
     {
         Schema::create('harga_barangs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
-            $table->decimal('harga', 15, 2);
-            $table->enum('satuan', ['jam', 'hari', 'minggu', 'bulan', 'tahun']);
+            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete(); // FK ke barangs
+            $table->decimal('harga', 15, 2);       // angka desimal (15 digit, 2 angka di belakang koma) untuk uang
+            $table->enum('satuan', ['jam', 'hari', 'minggu', 'bulan', 'tahun']); // satuan waktu sewa (pilihan terbatas)
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('harga_barangs');

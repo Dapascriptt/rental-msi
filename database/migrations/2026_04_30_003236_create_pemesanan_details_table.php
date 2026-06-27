@@ -6,31 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up(): void                    // membuat tabel "pemesanan_details" (barang apa saja dalam 1 pesanan)
     {
        Schema::create('pemesanan_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pemesanan_id')->constrained('pemesanans')->cascadeOnDelete();
-            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
+            $table->foreignId('pemesanan_id')->constrained('pemesanans')->cascadeOnDelete(); // FK ke pemesanan induk
+            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();        // FK ke barang yang dipesan
 
-            $table->integer('qty');
+            $table->integer('qty');                // jumlah unit yang dipesan
 
-            // snapshot harga
-            $table->decimal('harga', 15, 2);
-            $table->enum('satuan', ['jam', 'hari', 'minggu', 'bulan', 'tahun']);
+            // snapshot harga: harga & satuan disalin saat memesan, agar tidak berubah
+            // walau harga master barang nanti diubah
+            $table->decimal('harga', 15, 2);       // harga saat memesan
+            $table->enum('satuan', ['jam', 'hari', 'minggu', 'bulan', 'tahun']); // satuan saat memesan
 
-            $table->integer('durasi'); // optional tapi recommended
+            $table->integer('durasi'); // lama durasi sewa
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('pemesanan_details');

@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware;                  // alamat class
 
-use Illuminate\Http\Middleware\TrustProxies as Middleware;
-use Illuminate\Http\Request;
+use Illuminate\Http\Middleware\TrustProxies as Middleware; // bawaan Laravel
+use Illuminate\Http\Request;                    // pembawa request
 
+// Mengatur "proxy" yang dipercaya (misal saat aplikasi di belakang load
+// balancer). Agar Laravel tahu alamat IP & protokol asli pengunjung.
 class TrustProxies extends Middleware
 {
     /**
@@ -12,17 +14,17 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies;                         // daftar IP proxy yang dipercaya (null = belum diset)
 
     /**
      * The headers that should be used to detect proxies.
      *
      * @var int
      */
-    protected $headers =
-        Request::HEADER_X_FORWARDED_FOR |
-        Request::HEADER_X_FORWARDED_HOST |
-        Request::HEADER_X_FORWARDED_PORT |
-        Request::HEADER_X_FORWARDED_PROTO |
-        Request::HEADER_X_FORWARDED_AWS_ELB;
+    protected $headers =                        // header yang dipakai untuk mendeteksi info asli dari proxy
+        Request::HEADER_X_FORWARDED_FOR |       // IP asli pengunjung
+        Request::HEADER_X_FORWARDED_HOST |      // host asli
+        Request::HEADER_X_FORWARDED_PORT |      // port asli
+        Request::HEADER_X_FORWARDED_PROTO |     // protokol asli (http/https)
+        Request::HEADER_X_FORWARDED_AWS_ELB;    // header khusus AWS load balancer
 }

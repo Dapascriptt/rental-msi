@@ -1,62 +1,62 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers;                 // alamat class
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Models\Barang;
-use App\Models\Unit;
-use App\Models\Pemesanan;
-use App\Models\PemesananDetail;
-use App\Models\PemesananUnit;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\AdminCheckoutNotification;
+use Illuminate\Http\Request;                    // pembawa data form
+use Illuminate\Support\Facades\DB;              // untuk Database Transaction
+use App\Models\Barang;                          // model Barang
+use App\Models\Unit;                            // model Unit
+use App\Models\Pemesanan;                       // model Pemesanan
+use App\Models\PemesananDetail;                 // model detail pemesanan
+use App\Models\PemesananUnit;                   // model unit per detail
+use Illuminate\Support\Facades\Mail;            // untuk mengirim email
+use App\Mail\AdminCheckoutNotification;         // email notifikasi ke admin
 
-class CartController extends Controller
+class CartController extends Controller          // controller keranjang & checkout (publik)
 {
-    public function addToCart(Request $request)
+    public function addToCart(Request $request)  // menambahkan unit ke keranjang (disimpan di session)
     {
         $request->validate([
             'barang_id' => 'required|exists:barangs,id',
-            'units' => 'required|array',
-            'units.*' => 'exists:units,id'
+            'units' => 'required|array',         // daftar unit yang dipilih (array)
+            'units.*' => 'exists:units,id'       // tiap unit harus ada di tabel units
         ]);
 
         $barangId = $request->barang_id;
         $unitIds = $request->units;
 
-        $cart = session()->get('cart', []);
+        $cart = session()->get('cart', []);      // ambil keranjang saat ini (kosong jika belum ada)
 
-        if (isset($cart[$barangId])) {
-            $cart[$barangId]['units'] = array_unique(array_merge($cart[$barangId]['units'], $unitIds));
-        } else {
+        if (isset($cart[$barangId])) {           // jika barang ini sudah ada di keranjang
+            $cart[$barangId]['units'] = array_unique(array_merge($cart[$barangId]['units'], $unitIds)); // gabung unit, buang duplikat
+        } else {                                 // jika belum ada
             $cart[$barangId] = [
-                'units' => $unitIds
+                'units' => $unitIds              // simpan unit-unitnya
             ];
         }
 
-        session()->put('cart', $cart);
+        session()->put('cart', $cart);           // simpan kembali keranjang ke session
 
-        return back()->with('success', 'Unit berhasil ditambahkan ke keranjang!');
+        return back()->with('success', 'Unit berhasil ditambahkan ke keranjang!'); // kembali + pesan sukses
     }
 
-    public function index()
+    public function index()                      // menampilkan isi keranjang dalam bentuk JSON
     {
         $cart = session()->get('cart', []);
-        return response()->json($cart); 
+        return response()->json($cart);
     }
 
-    public function checkout()
+    public function checkout()                   // menampilkan halaman checkout
     {
         $cartSession = session()->get('cart', []);
-        
-        if (empty($cartSession)) {
+
+        if (empty($cartSession)) {               // jika keranjang kosong, tolak masuk checkout
             return redirect()->route('units.katalog')->with('error', 'Keranjang Anda kosong!');
         }
 
-        $barangIds = array_keys($cartSession);
+        $barangIds = array_keys($cartSession);   // ambil id semua barang di keranjang
         $cartItems = Barang::whereIn('id', $barangIds)->get()->map(function($brg) use ($cartSession) {
-            $brg->selected_units = Unit::whereIn('id', $cartSession[$brg->id]['units'])->get();
+            $brg->selected_units = Unit::whereIn('id', $cartSession[$brg->id]['units'])->get(); // tempelkan unit yang dipilih
             return $brg;
         });
 
@@ -64,26 +64,26 @@ class CartController extends Controller
     }
 
     // Proses Submit Checkout ke DB
-    public function processCheckout(Request $request)
+    public function processCheckout(Request $request) // menyimpan pesanan ke database
     {
-        $request->validate([
+        $request->validate([                     // validasi data form pemesan
             'nama_pemesan' => 'required|string|max:255',
             'no_hp' => 'required|string|max:20',
             'perusahaan' => 'nullable|string|max:255',
             'alamat' => 'required|string',
             'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai', // selesai tidak boleh sebelum mulai
             'emails' => 'required|email|max:255',
         ]);
 
         $cartSession = session()->get('cart', []);
-        if (empty($cartSession)) {
+        if (empty($cartSession)) {               // pastikan keranjang tidak kosong
             return redirect()->route('units.katalog')->with('error', 'Keranjang kosong!');
         }
 
-        DB::beginTransaction();
+        DB::beginTransaction();                  // MULAI transaksi: semua atau tidak sama sekali
         try {
-            $pemesanan = Pemesanan::create([
+            $pemesanan = Pemesanan::create([     // 1) simpan data pemesanan utama
                 'nama_pemesan' => $request->nama_pemesan,
                 'no_hp' => $request->no_hp,
                 'perusahaan' => $request->perusahaan,
@@ -91,20 +91,20 @@ class CartController extends Controller
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
                 'emails' => $request->emails,
-                'status' => 'pending',
+                'status' => 'pending',           // status awal selalu 'pending'
             ]);
 
-            foreach ($cartSession as $barangId => $cartData) {
+            foreach ($cartSession as $barangId => $cartData) { // 2) untuk tiap barang di keranjang
                 $barang = Barang::with('hargaBarangs')->find($barangId);
-                $qty = count($cartData['units']);
-                
-                $hargaRef = $barang->hargaBarangs->first();
-                $harga = $hargaRef && is_numeric($hargaRef->harga) ? $hargaRef->harga : 0;
-                
-                $validSatuan = ['jam', 'hari', 'minggu', 'bulan', 'tahun'];
-                $satuan = ($hargaRef && in_array(strtolower($hargaRef->satuan), $validSatuan)) ? strtolower($hargaRef->satuan) : 'jam';
+                $qty = count($cartData['units']); // jumlah unit = banyaknya unit yang dipilih
 
-                $detail = PemesananDetail::create([
+                $hargaRef = $barang->hargaBarangs->first(); // ambil harga pertama barang ini
+                $harga = $hargaRef && is_numeric($hargaRef->harga) ? $hargaRef->harga : 0; // pakai harga itu, atau 0 jika tak valid
+
+                $validSatuan = ['jam', 'hari', 'minggu', 'bulan', 'tahun'];
+                $satuan = ($hargaRef && in_array(strtolower($hargaRef->satuan), $validSatuan)) ? strtolower($hargaRef->satuan) : 'jam'; // satuan valid, default 'jam'
+
+                $detail = PemesananDetail::create([ // simpan baris detail untuk barang ini
                     'pemesanan_id' => $pemesanan->id,
                     'barang_id' => $barangId,
                     'qty' => $qty,
@@ -113,7 +113,7 @@ class CartController extends Controller
                     'durasi' => 1,
                 ]);
 
-                foreach ($cartData['units'] as $unitId) {
+                foreach ($cartData['units'] as $unitId) { // 3) catat tiap unit yang dipakai
                     PemesananUnit::create([
                         'pemesanan_detail_id' => $detail->id,
                         'unit_id' => $unitId
@@ -121,66 +121,64 @@ class CartController extends Controller
                 }
             }
 
-            DB::commit(); 
-            
-           
-            $adminEmail = config('mail.admin_address');
-            
-            if (!empty($adminEmail)) {
+            DB::commit();                        // semua sukses -> simpan permanen
+
+            $adminEmail = config('mail.admin_address'); // ambil email admin dari konfigurasi
+
+            if (!empty($adminEmail)) {           // jika email admin di-set, kirim notifikasi
                 Mail::to($adminEmail)->send(new AdminCheckoutNotification($pemesanan));
             }
-            
 
-            session()->forget('cart');
+            session()->forget('cart');           // kosongkan keranjang setelah berhasil
 
            return redirect()->route('checkout.success')->with('success', 'Pesanan berhasil dibuat! Tim kami akan segera menghubungi Anda.');
 
-        } catch (\Exception $e) {
-            DB::rollBack(); 
+        } catch (\Exception $e) {                // jika ADA error di tengah jalan
+            DB::rollBack();                      // batalkan SEMUA perubahan di atas
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
 
-    public function removeItem($barangId)
+    public function removeItem($barangId)        // hapus 1 barang (beserta semua unitnya) dari keranjang
     {
         $cart = session()->get('cart', []);
-        
+
         if (isset($cart[$barangId])) {
-            unset($cart[$barangId]);
+            unset($cart[$barangId]);             // hapus barang itu dari array keranjang
             session()->put('cart', $cart);
         }
 
-        if (empty(session()->get('cart'))) {
+        if (empty(session()->get('cart'))) {     // jika keranjang jadi kosong
             return redirect()->route('units.katalog')->with('error', 'Keranjang Anda sudah kosong.');
         }
 
         return back()->with('success', 'Item berhasil dihapus dari keranjang.');
     }
 
-    public function clearCart()
+    public function clearCart()                  // kosongkan seluruh keranjang
     {
         session()->forget('cart');
         return redirect()->route('units.katalog')->with('success', 'Keranjang berhasil dikosongkan.');
     }
 
-    public function removeUnit($barangId, $unitId)
+    public function removeUnit($barangId, $unitId) // hapus 1 unit saja dari sebuah barang di keranjang
     {
         $cart = session()->get('cart', []);
 
         if (isset($cart[$barangId])) {
             $units = $cart[$barangId]['units'];
-            
-            $key = array_search($unitId, $units);
-            
+
+            $key = array_search($unitId, $units); // cari posisi unit di dalam array
+
             if ($key !== false) {
-                unset($units[$key]);
-                
-                if (count($units) > 0) {
-                    $cart[$barangId]['units'] = array_values($units); 
-                } else {
-                    unset($cart[$barangId]);
+                unset($units[$key]);             // buang unit itu
+
+                if (count($units) > 0) {         // jika masih ada unit lain
+                    $cart[$barangId]['units'] = array_values($units); // rapikan ulang index array
+                } else {                         // jika unitnya habis
+                    unset($cart[$barangId]);     // hapus barangnya juga
                 }
-                
+
                 session()->put('cart', $cart);
             }
         }
@@ -192,7 +190,7 @@ class CartController extends Controller
         return back()->with('success', '1 Unit berhasil dihapus dari keranjang.');
     }
 
-    public function success()
+    public function success()                    // halaman "pesanan berhasil"
     {
         return view('landing-page.katalog.checkout-success');
     }

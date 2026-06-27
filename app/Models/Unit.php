@@ -1,29 +1,29 @@
 <?php
 
-namespace App\Models;
+namespace App\Models;                            // alamat class model
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // agar model bisa pakai factory
+use Illuminate\Database\Eloquent\Model;          // class dasar model Eloquent
 
-class Unit extends Model
+class Unit extends Model                          // model Unit mewakili tabel "units" (wujud fisik barang)
 {
-    use HasFactory;
+    use HasFactory;                               // mengaktifkan fitur factory
 
-    protected $fillable = [
-        'barang_id',
-        'kode_unit',
-        'serial_machine',
-        'serial_engine',
-        'tahun_migrasi',
-        'status'
+    protected $fillable = [                       // kolom yang boleh diisi massal
+        'barang_id',                              // foreign key ke barang induknya
+        'kode_unit',                              // kode unik tiap unit
+        'serial_machine',                         // nomor seri mesin
+        'serial_engine',                          // nomor seri engine
+        'tahun_migrasi',                          // tahun migrasi/produksi
+        'status'                                  // status: available / booked / maintenance
     ];
 
-    public function barang()
+    public function barang()                      // relasi: 1 unit dimiliki 1 barang
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Barang::class);   // belongsTo karena tabel units menyimpan barang_id
     }
 
-    public function pemesananUnits()
+    public function pemesananUnits()              // relasi: 1 unit bisa muncul di banyak baris pemesanan
     {
         return $this->hasMany(PemesananUnit::class);
     }

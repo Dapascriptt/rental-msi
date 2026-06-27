@@ -4,14 +4,14 @@
 <div class="max-w-3xl mx-auto px-4">
 
     <div class="bg-slate-50 p-8 rounded-lg border border-gray-200 shadow-sm">
-        
+
         <h2 class="text-xl font-bold text-gray-800 uppercase tracking-wider mb-6 border-b border-gray-200 pb-4">
             {{ isset($allSpecs) ? 'Edit Spesifikasi' : 'Tambah Spesifikasi' }}
         </h2>
 
         <form method="POST"
               action="{{ isset($allSpecs) ? route('spesifikasis.update', $spesifikasi->id) : route('spesifikasis.store') }}">
-            
+
             @csrf
             @if(isset($allSpecs))
                 @method('PUT')
@@ -32,8 +32,8 @@
                 @else
                     {{-- MODE CREATE --}}
                     <select name="barang_id"
-                        class="w-full bg-slate-50 text-gray-800 border border-gray-300 rounded-md 
-                        focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 
+                        class="w-full bg-slate-50 text-gray-800 border border-gray-300 rounded-md
+                        focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500
                         py-2.5 px-3 outline-none transition uppercase shadow-sm">
 
                         @foreach($barangs as $barang)
