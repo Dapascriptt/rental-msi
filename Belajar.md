@@ -978,9 +978,169 @@ controller-nya dalam satu tabel.
 
 ---
 
-## 14. Cara menjalankan project ini dari nol
+## 14. Install Laravel dari nol (membuat project baru)
 
-Langkah-langkah kalau kamu baru clone project ini:
+Bagian ini berbeda dengan bab berikutnya. Di sini kita bahas cara membuat
+project Laravel **baru dari kosong** (misalnya kamu mau bikin aplikasi
+sendiri untuk latihan). Sedangkan Bab 15 membahas cara menjalankan
+project rental MSI ini yang sudah jadi.
+
+Inti yang perlu dipahami dulu: Laravel itu **tidak di-install seperti
+aplikasi biasa** (tidak ada file installer .exe yang tinggal next-next).
+Laravel "diunduh dan dirakit" oleh sebuah alat bernama **Composer**. Jadi
+sebelum bisa bikin Laravel, komputermu harus punya beberapa alat dulu.
+
+### Langkah 1: Siapkan alat yang dibutuhkan (prasyarat)
+
+Laravel butuh tiga hal ini terpasang di komputer:
+
+1. **PHP** (versi 8.1 ke atas untuk project ini) — bahasa pemrogramannya.
+2. **Composer** — pengatur library PHP. Ini yang akan mengunduh Laravel.
+3. **Database** — umumnya MySQL.
+
+Cara paling mudah untuk pemula (Windows): install **Laragon** atau
+**XAMPP**. Sekali install, kamu langsung dapat PHP + MySQL sekaligus.
+Laragon lebih disarankan karena lebih ringan dan sudah include Composer.
+
+Untuk bagian frontend (CSS/JS) nantinya juga butuh **Node.js**, tapi itu
+bisa menyusul.
+
+**Cek apakah alatnya sudah ada.** Buka terminal (CMD / PowerShell /
+Git Bash) lalu ketik satu per satu:
+
+```bash
+php -v          # harus muncul versi PHP, misal PHP 8.2.x
+composer -V     # harus muncul versi Composer
+node -v         # harus muncul versi Node (opsional, untuk aset frontend)
+```
+
+Kalau perintahnya tidak dikenali ("not recognized"), berarti alat itu
+belum terpasang atau belum masuk ke PATH. Selesaikan ini dulu sebelum
+lanjut. Tanpa PHP dan Composer, Laravel tidak bisa dibuat.
+
+> Catatan soal Composer: kalau belum punya, unduh installer-nya di
+> https://getcomposer.org/download. Saat install, dia akan minta lokasi
+> php.exe — arahkan ke PHP milik Laragon/XAMPP (contoh:
+> `C:\laragon\bin\php\php-8.2\php.exe`).
+
+### Langkah 2: Buat project Laravel baru
+
+Ada dua cara. Keduanya menghasilkan hasil yang sama, pilih salah satu.
+
+**Cara A — pakai Composer langsung (paling umum, tidak perlu setup
+tambahan):**
+
+```bash
+composer create-project laravel/laravel nama-project-ku
+```
+
+Ganti `nama-project-ku` dengan nama yang kamu mau. Composer akan mengunduh
+kerangka Laravel beserta semua library-nya ke dalam folder itu. Proses ini
+butuh koneksi internet dan agak lama saat pertama kali (mengunduh isi
+folder `vendor/`).
+
+Untuk membuat versi Laravel yang sama persis dengan project ini (Laravel
+10), tambahkan versinya:
+
+```bash
+composer create-project laravel/laravel:^10.0 nama-project-ku
+```
+
+**Cara B — pakai Laravel Installer:**
+
+```bash
+composer global require laravel/installer   # cukup sekali seumur hidup
+laravel new nama-project-ku
+```
+
+Cara B butuh sedikit setup PATH tambahan, jadi untuk pemula Cara A
+biasanya lebih bebas masalah.
+
+### Langkah 3: Masuk ke folder dan cek isinya
+
+```bash
+cd nama-project-ku
+```
+
+Saat ini kamu sudah punya struktur folder Laravel yang sama persis seperti
+yang dijelaskan di Bab 3 (ada `app/`, `routes/`, `resources/`, dan
+seterusnya). Yang membedakan project ini dengan project barumu hanyalah
+isi controller, model, dan view-nya. Kerangkanya identik.
+
+Beberapa hal yang **sudah otomatis dilakukan** saat `create-project`:
+
+- File `.env` sudah dibuatkan otomatis (disalin dari `.env.example`).
+- `APP_KEY` sudah otomatis di-generate.
+
+Jadi untuk project baru, dua langkah itu tidak perlu kamu lakukan manual.
+
+### Langkah 4: Atur database
+
+Buka file `.env`, sesuaikan bagian database:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nama_database_ku   # buat database kosong ini dulu di phpMyAdmin
+DB_USERNAME=root
+DB_PASSWORD=                    # kosong kalau pakai XAMPP/Laragon default
+```
+
+Lalu buat database kosong dengan nama yang sama lewat phpMyAdmin (atau
+Adminer di Laragon). Setelah itu jalankan migration untuk membuat tabel
+bawaan:
+
+```bash
+php artisan migrate
+```
+
+Kalau muncul pertanyaan konfirmasi membuat database, jawab yes.
+
+### Langkah 5: Jalankan (serve)
+
+```bash
+php artisan serve
+```
+
+Akan muncul pesan seperti:
+
+```
+INFO  Server running on [http://127.0.0.1:8000].
+```
+
+Buka alamat itu di browser. Kalau muncul halaman selamat datang Laravel,
+berarti instalasi berhasil. Selamat, kamu sudah punya aplikasi Laravel
+yang berjalan.
+
+Untuk menghentikan server, tekan `Ctrl + C` di terminal.
+
+### Ringkasan urutan untuk project baru
+
+```bash
+composer create-project laravel/laravel nama-project-ku
+cd nama-project-ku
+# atur DB di file .env, lalu buat database kosongnya
+php artisan migrate
+php artisan serve
+```
+
+Itu saja. Dari sinilah semua project Laravel bermula, termasuk project
+rental MSI ini. Bedanya, project ini sudah diisi banyak controller, model,
+dan view oleh pembuatnya. Cara menjalankan project yang sudah jadi seperti
+ini ada di bab berikutnya.
+
+---
+
+## 15. Cara menjalankan project ini dari nol
+
+Bab sebelumnya membuat project Laravel **baru**. Bab ini berbeda: kamu
+sudah dapat project rental MSI ini (misalnya hasil clone dari Git atau
+diberi temanmu), tinggal menjalankannya. Karena folder `vendor/` dan file
+`.env` biasanya tidak ikut dibagikan (sengaja, lihat Bab 4), ada beberapa
+langkah yang harus kamu lakukan sendiri.
+
+Langkah-langkahnya:
 
 ```bash
 # 1. Masuk ke folder project
@@ -1018,7 +1178,7 @@ untuk mengetahui email & password admin yang sudah disiapkan.
 
 ---
 
-## 15. Ringkasan alur satu fitur (biar nyambung semua)
+## 16. Ringkasan alur satu fitur (biar nyambung semua)
 
 Supaya semua konsep di atas terhubung, ikuti alur saat pengunjung
 menyewa alat:
@@ -1046,7 +1206,7 @@ menguasai inti cara kerja Laravel. Sisanya tinggal memperbanyak latihan.
 
 ---
 
-## 16. Saran belajar lanjutan
+## 17. Saran belajar lanjutan
 
 - Coba tambah satu fitur kecil sendiri, misalnya kolom baru di tabel
   barang. Latihan: buat migration → tambah ke `$fillable` → tambah di
